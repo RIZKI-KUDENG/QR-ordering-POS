@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  name String
+  username String @unique
+  password String
+  role Role @default(CASHIER)
+  createdAt DateTime @default(now())
+}
+
+enum Role{
+  ADMIN
+  CASHIER
+  KITCHEN
+}
+model Table {
+  id        Int      @id @default(autoincrement())
+  number    String   @unique 
+  token     String   @unique 
+  orders    Order[]
+}
+
+model Category{
+  id Int @id @default(autoincrement())
+  name String
+  products Product[]
+}
+
+model Product{
+  id Int @id @default(autoincrement())
+  name String
+  price Decimal @db.Decimal(10, 2)
+  image_url String?
+  is_available Boolean @default(true)
+  category_id Int
+  category Category @relation(fields: [category_id], references: [id])
+  variants Variant[]
+  orderItems OrderItem[]
+}
+
+model Variant{
+  id Int @id @default(autoincrement())
+  name String
+  product_id Int
+  product Product @relation(fields: [product_id], references: [id])
+  options VariantOption[]
+  is_required Boolean @default(false)
+}
+
+model VariantOption {
+  id          Int      @id @default(autoincrement())
+  name        String   
+  extra_price Decimal  @default(0) @db.Decimal(10, 2)
+  variant_id  Int
+  variant     Variant  @relation(fields: [variant_id], references: [id])
+  orderItemOptions OrderItemOption[]
+}
+
+model Order {
+  id            Int      @id @default(autoincrement())
+  table_id      Int
+  table         Table    @relation(fields: [table_id], references: [id])
+  total_amount  Decimal  @db.Decimal(10, 2)
+  payment_method String  
+  status        String   @default("PENDING") 
+  created_at    DateTime @default(now())
+  items         OrderItem[]
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  order_id  Int
+  product_id Int
+  quantity  Int
+  price     Decimal   @db.Decimal(10, 2) 
+  order     Order     @relation(fields: [order_id], references: [id])
+  product   Product   @relation(fields: [product_id], references: [id])
+  selectedOptions OrderItemOption[]
+}
+
+model OrderItemOption {
+  id              Int           @id @default(autoincrement())
+  order_item_id   Int
+  variant_option_id Int
+  orderItem       OrderItem     @relation(fields: [order_item_id], references: [id])
+  variantOption   VariantOption @relation(fields: [variant_option_id], references: [id])
+}
