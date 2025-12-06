@@ -1,8 +1,8 @@
-import {Table} from '../db';
+import prisma from "../db/database.js";
 
 export const getTables = async (req, res) => {
     try {
-        const tables = await Table.findMany();
+        const tables = await prisma.table.findMany();
         res.status(200).json(tables);
     } catch (error) {
         res.status(500).json({message: error.message});
@@ -11,7 +11,7 @@ export const getTables = async (req, res) => {
 
 export const getTableById = async (req, res) => {
     try {
-        const table = await Table.findUnique({
+        const table = await prisma.table.findUnique({
             where: {
                 id: req.params.id
             }
@@ -24,7 +24,7 @@ export const getTableById = async (req, res) => {
 
 export const createTable = async (req, res) => {
     try {
-        const table = await Table.create({
+        const table = await prisma.table.create({
             data: req.body
         });
         res.status(201).json(table);
@@ -35,7 +35,7 @@ export const createTable = async (req, res) => {
 
 export const updateTable = async (req, res) => {
     try {
-        const table = await Table.update({
+        const table = await prisma.table.update({
             where: {
                 id: req.params.id
             },

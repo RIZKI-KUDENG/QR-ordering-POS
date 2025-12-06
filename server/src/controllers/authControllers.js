@@ -1,5 +1,5 @@
-import { User } from "../db";
-import { hashPasword, comparePassword } from "../utils/bcrypt";
+import prisma from "../db/database.js"
+import { hashPassword, comparePassword } from "../utils/bcrypt";
 import jwt from "jsonwebtoken";
 
 export const register = async (req, res) => {
@@ -8,9 +8,9 @@ export const register = async (req, res) => {
     if (!username || !password || !name) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    const user = await User.create({
+    const user = await prisma.user.create({
       username,
-      password: hashPasword(password),
+      password: hashPassword(password),
       name,
     });
     res.status(201).json({ message: "User created successfully", user });
@@ -23,7 +23,7 @@ export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const user = await User.findOne({
+    const user = await prisma.user.findOne({
       where: {
         username,
       },
@@ -40,7 +40,7 @@ export const login = async (req, res) => {
         name: user.name,
         role: user.role,
       },
-      process.env.JWT.SECRET,
+      process.env.JWT_SECRET,
       {
         expiresIn: "1d",
       }

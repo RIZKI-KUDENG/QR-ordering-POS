@@ -6,7 +6,7 @@ export const authMiddleware = (req, res, next) => {
         if(!authHeader){
            return res.status(401).json({message: 'Unauthorized'})
         }
-        const token = authHeader.split('')[1]
+        const token = authHeader.split(' ')[1]
         if(!token){
             return res.status(401).json({message: 'Unauthorized'})
         }
