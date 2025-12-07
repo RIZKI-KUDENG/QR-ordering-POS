@@ -1,5 +1,6 @@
 import prisma from "../db/database.js";
-import {hashPassword} from "../utils/bcrypt.js";
+import {hashPassword, comparePassword} from "../utils/bcrypt.js";
+import jwt from "jsonwebtoken";
 
 export const createUser = async (userData) => {
     const hashed = hashPassword(userData.password);

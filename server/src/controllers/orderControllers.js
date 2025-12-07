@@ -1,7 +1,5 @@
 import { createOrderService } from "../services/orderService.js";
 
-import { createOrderService } from "../services/orderService.js";
-
 export const createOrder = async (req, res) => {
   try {
     const { tableToken, items } = req.body;

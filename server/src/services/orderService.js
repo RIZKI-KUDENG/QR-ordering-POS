@@ -37,15 +37,15 @@ export const createOrderService = async (payload) => {
         throw new Error(`Quantity untuk produk ${product.name} tidak valid`);
       }
 
-      // Harga asli produk 
+      // Harga asli produk
       const basePrice = product.price;
 
-      // Ambil opsi 
+      // Ambil opsi
       let optionRecords = [];
       let optionsExtraTotalPerQty = 0;
 
       if (item.selectedOptions && item.selectedOptions.length > 0) {
-        optionRecords = await tx.productOption.findMany({
+        optionRecords = await tx.variantOption.findMany({
           where: {
             id: { in: item.selectedOptions },
           },
@@ -82,9 +82,10 @@ export const createOrderService = async (payload) => {
     //buat Order
     const createdOrder = await tx.order.create({
       data: {
-        tableId: table.id,
+        table_id: table.id,
         status: "PENDING",
-        total: totalPrice,
+        total_amount: totalPrice,
+        payment_method: "CASH",
       },
     });
 
@@ -92,20 +93,18 @@ export const createOrderService = async (payload) => {
     for (const enriched of enrichedItems) {
       const orderItem = await tx.orderItem.create({
         data: {
-          orderId: createdOrder.id,
-          productId: enriched.product.id,
+          order_id: createdOrder.id,
+          product_id: enriched.product.id,
           quantity: enriched.quantity,
-          unitPrice: enriched.unitPrice,
-          subtotal: enriched.itemSubtotal,
+          price: enriched.unitPrice,
         },
       });
 
       if (enriched.options.length > 0) {
         await tx.orderItemOption.createMany({
           data: enriched.options.map((opt) => ({
-            orderItemId: orderItem.id,
-            optionId: opt.id,
-            extraPrice: opt.extraPrice,
+            order_item_id: orderItem.id,
+            variant_option_id: opt.id,
           })),
         });
       }
