@@ -1,4 +1,5 @@
 import prisma from "../db/database.js";
+import midtransClient from "midtrans-client";
 
 export const createOrderService = async (payload) => {
   const { tableToken, items } = payload;
@@ -112,6 +113,24 @@ export const createOrderService = async (payload) => {
 
     return createdOrder;
   });
-
-  return order;
+  const snap = new midtransClient.Snap({
+    isProduction: false,
+    serverKey: process.env.MIDTRANS_SERVER_KEY,
+  })
+  const snapPayload = {
+    transaction_detail: {
+        order_id: order.id.toString(),
+        gross_amount: totalPrice
+    },
+    credit_card: {
+        secure: true
+    }
+  }
+  const snapResponse = await snap.createTransaction(snapPayload);
+  return{
+     message: "Order created",
+    orderId: createdOrder.id,
+    snapToken: snapResponse.token,
+    redirectUrl: snapResponse.redirect_url,
+  }
 };
