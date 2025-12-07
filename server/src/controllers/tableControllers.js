@@ -46,3 +46,19 @@ export const updateTable = async (req, res) => {
         res.status(500).json({message: error.message});
     }
 }
+
+export const getTableByToken = async (req, res) => {
+    try {
+        const { token } = req.params; 
+        const table = await prisma.table.findUnique({
+            where: { token: token },
+            select: { id: true, number: true } 
+        });
+        
+        if (!table) return res.status(404).json({message: "QR Code tidak valid"});
+        
+        res.status(200).json(table);
+    } catch (error) {
+        res.status(500).json({message: error.message});
+    }
+}

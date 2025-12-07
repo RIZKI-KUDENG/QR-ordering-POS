@@ -1,18 +1,8 @@
-import prisma from "../db/database.js"
-import { hashPassword, comparePassword } from "../utils/bcrypt";
-import jwt from "jsonwebtoken";
+import { createUser, loginUser } from "../services/authService.js";
 
 export const register = async (req, res) => {
   try {
-    const { username, password, name } = req.body;
-    if (!username || !password || !name) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
-    const user = await prisma.user.create({
-      username,
-      password: hashPassword(password),
-      name,
-    });
+    const user = await createUser(req.body);
     res.status(201).json({ message: "User created successfully", user });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -22,32 +12,9 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
-
-    const user = await prisma.user.findOne({
-      where: {
-        username,
-      },
-    });
-    const isMatch = await comparePassword(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    const token = jwt.sign(
-      {
-        id: user.id,
-        username: user.username,
-        name: user.name,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1d",
-      }
-    );
-
-    res.status(200).json({ message: "Login successful", token });
+    const { token, user } = await loginUser(username, password);
+    res.status(200).json({ message: "Login successful", token, user });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(401).json({ message: error.message });
   }
 };
