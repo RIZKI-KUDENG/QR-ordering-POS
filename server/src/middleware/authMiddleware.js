@@ -28,3 +28,10 @@ export const verifyAdmin = (req, res, next) => {
     }
     next();
 }
+
+export const verifyKitchen = (req, res, next) => {
+    if(req.user.role !== 'KITCHEN' && req.user.role !== 'ADMIN'){
+        return res.status(403).json({message: 'Forbidden'})
+    }
+    next();
+}
