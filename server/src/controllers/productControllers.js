@@ -6,7 +6,7 @@ export const getProducts = async (req, res) => {
         const products = await prisma.product.findMany({
             include: {
                 category: true,
-                variant: {
+                variants: {
                     include: {options : true}
                 }
             }
