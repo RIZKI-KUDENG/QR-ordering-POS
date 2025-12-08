@@ -4,11 +4,13 @@ export const createOrder = async (req, res) => {
   try {
     const { tableToken, items } = req.body;
 
-    const order = await createOrderService({ tableToken, items });
+    const result = await createOrderService({ tableToken, items });
 
     res.status(201).json({
       message: "Order created",
-      orderId: order.id,
+      orderId: result.orderId,
+      snapToken: result.snapToken,
+      redirectUrl: result.redirectUrl,
     });
   } catch (error) {
     res.status(400).json({

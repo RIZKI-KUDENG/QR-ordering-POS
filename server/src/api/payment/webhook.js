@@ -17,7 +17,11 @@ export const midtransWebhook = async (req, res) => {
         where: { id: Number(order_id) },
         data: { status: "PAID" },
       });
-
+      const io = req.app.get("socketio");
+      io.emit('new order', {
+        message: "Pesanan Baru",
+        orderId: order_id
+      })
     }
 
     return res.status(200).json({ message: "OK" }); 

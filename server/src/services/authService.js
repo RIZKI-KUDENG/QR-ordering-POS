@@ -3,7 +3,7 @@ import {hashPassword, comparePassword} from "../utils/bcrypt.js";
 import jwt from "jsonwebtoken";
 
 export const createUser = async (userData) => {
-    const hashed = hashPassword(userData.password);
+    const hashed = await hashPassword(userData.password);
     const user = await prisma.user.create({
         data: {
             username: userData.username,
