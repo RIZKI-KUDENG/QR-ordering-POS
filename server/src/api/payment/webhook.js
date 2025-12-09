@@ -1,4 +1,5 @@
-import prisma from "../db/database.js";
+import prisma from "../../db/database.js"
+
 
 export const midtransWebhook = async (req, res) => {
   try {
