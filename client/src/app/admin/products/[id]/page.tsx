@@ -21,6 +21,7 @@ export default function EditPage() {
   const handleSubmit = (data: any) => {
     updateProduct(data);
   };
+console.log(product)
 
   if (loadingCategories || loadingProduct) {
     return <div className="p-6">Memuat data produk...</div>;
