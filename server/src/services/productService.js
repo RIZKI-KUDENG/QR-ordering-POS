@@ -1,4 +1,4 @@
-import prisma from "../db/database";
+import prisma from "../db/database.js";
 
 export const createProductService = async (data) => {
 
