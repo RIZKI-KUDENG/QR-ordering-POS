@@ -6,11 +6,11 @@ const productRouter = express.Router();
 productRouter.get('/:id', getProductById);
 productRouter.get('/', getProducts);
 
-productRouter.use(authMiddleware);
-productRouter.use(verifyAdmin);
+// productRouter.use(authMiddleware);
+// productRouter.use(verifyAdmin);
 
 productRouter.post('/', createProduct);
 productRouter.delete('/:id', deleteProduct);
-productRouter.put('/:id', updateProduct);
+productRouter.patch('/:id', updateProduct);
 
 export default productRouter;

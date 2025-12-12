@@ -1,5 +1,5 @@
 "use client"
-import { ProductSchema } from "../lib/validators/products"
+import { ProductSchema } from "../../lib/validators/products"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, FormProvider } from "react-hook-form"
 import VariantBuilder from "./VariantBuilder"

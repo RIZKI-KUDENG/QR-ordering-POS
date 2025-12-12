@@ -1,28 +1,29 @@
-"use client"
-import { useEffect, useState } from "react"
+"use client";
+
 import ProductForm from "../../ProductForm";
+import { useCategories } from "@/hooks/useCategories";
+import { useCreateProduct } from "@/hooks/useProduct";
+
 export default function CreatePage() {
-    const [categories, setCategories] = useState([]);
+  const { data: categories = [], isLoading: isLoadingCategories } =
+    useCategories();
 
-    useEffect(() => {
-        const fetchCategories = async () => {
-            const res = await fetch("http://localhost:3001/categories");
-            const data = await res.json();
-            setCategories(data);
-        }
-        fetchCategories();
-    })
-const handleSubmit = async (data: any) => {
-    await fetch("http://localhost:3001/products", {
-        method: "POST",
-        body: JSON.stringify(data),
-    })
-}
+  const { mutate: createProduct, isPending: isSaving } = useCreateProduct();
 
-    return (
-        <div>
-            <h1>Create Product</h1>
-            <ProductForm categories={categories} onSubmit={handleSubmit} />
-        </div>
-    )
+  const handleSubmit = (data: any) => {
+    createProduct(data);
+  };
+
+  if (isLoadingCategories) {
+    return <div className="p-6">Memuat kategori...</div>;
+  }
+
+  return (
+    <div className="p-6 max-w-2xl">
+      <h1 className="text-2xl font-bold mb-6">Create Product</h1>
+      <div className={isSaving ? "opacity-50 pointer-events-none" : ""}>
+        <ProductForm categories={categories} onSubmit={handleSubmit} />
+      </div>
+    </div>
+  );
 }
