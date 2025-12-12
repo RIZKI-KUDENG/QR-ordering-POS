@@ -18,6 +18,8 @@ export default function CreatePage() {
     return <div className="p-6">Memuat kategori...</div>;
   }
 
+  
+
   return (
     <div className="p-6 max-w-2xl">
       <h1 className="text-2xl font-bold mb-6">Create Product</h1>

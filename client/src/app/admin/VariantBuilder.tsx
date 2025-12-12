@@ -63,7 +63,7 @@ function VariantOptions({ variantIndex }: { variantIndex: number }) {
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "variants",
+    name: `variants.${variantIndex}.options`,
   });
 
   return (
