@@ -44,3 +44,15 @@ export const useDeleteTable = () => {
         }
     });
 };
+
+export const useTableByToken = (token: string) => {
+    return useQuery({
+        queryKey: ["table-token", token],
+        queryFn: async () => {
+            const res = await api.get(`/tables/scan/${token}`);
+            return res.data;
+        },
+        enabled: !!token,
+        retry: false
+    })
+}

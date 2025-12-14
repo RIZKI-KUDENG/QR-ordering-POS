@@ -1,7 +1,11 @@
-export default async function TableMenu({params} : any) {
-    return (
-        <div>
-            <h1>Menu </h1>
-        </div>
-    )
+import MenuClient from "./MenuClient";
+
+export default async function MenuPage({
+  params,
+}: {
+  params: Promise<{ tabletoken: string }>;
+}) {
+  const { tabletoken } = await params;
+
+  return <MenuClient token={tabletoken} />;
 }
