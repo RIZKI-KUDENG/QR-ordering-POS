@@ -3,12 +3,22 @@ import { useTableByToken } from "@/hooks/useTable";
 import { useProducts } from "@/hooks/useProduct";
 import Image from "next/image";
 import { useCategories } from "@/hooks/useCategories";
-import { Menu } from "lucide-react";
+import { useState, useMemo } from "react";
 
 export default function MenuClient({ token }: { token: string }) {
   const { data: table, isLoading, isError } = useTableByToken(token);
   const { data: products = [] } = useProducts();
   const { data: categories = [] } = useCategories();
+  const [activeCategory, setActiveCategory] = useState<string>("ALL");
+
+  const filteredProducts = useMemo(() => {
+    if (activeCategory === "ALL") return products;
+
+    return products.filter(
+      (product: any) => product.category?.name === activeCategory
+    );
+  }, [products, activeCategory]);
+
   if (isLoading) {
     return <div className="p-6">Memuat menu...</div>;
   }
@@ -23,52 +33,96 @@ export default function MenuClient({ token }: { token: string }) {
   console.log(table);
   console.log(products);
   return (
-   <div>
-     <div className="w-full bg-slate-50">
-      <div className="flex flex-col items-center justify-center py-4">
-        <Image
-          src={
-            "https://upload.wikimedia.org/wikipedia/id/thumb/5/5c/LogoMieGacoan.png/500px-LogoMieGacoan.png"
-          }
-          width={100}
-          height={100}
-          alt="logo"
-          loading="eager"
-          className="w-40 h-40 md:w-60 md:h-60 rounded-2xl"
-        ></Image>
-        <h1 className="text-2xl md:text-4xl font-bold py-4">Menu Gacoan</h1>
+    <div className="min-h-screen bg-slate-50">
+      {/* HEADER */}
+      <div className="bg-white shadow-sm sticky top-0 z-30">
+        <div className="flex flex-col items-center py-4">
+          <Image
+            src="https://upload.wikimedia.org/wikipedia/id/thumb/5/5c/LogoMieGacoan.png/500px-LogoMieGacoan.png"
+            width={120}
+            height={120}
+            alt="logo"
+            priority
+            className="w-28 h-28 object-contain"
+          />
+          <h1 className="text-2xl font-extrabold tracking-tight mt-2">
+            Menu Gacoan
+          </h1>
+        </div>
       </div>
-    </div>
-    <div>
-      <div className="flex flex-col items-center justify-center py-4 ">
-        <h5 className="text-xl md:text-2xl font-bold p-4 border rounded bg-slate-100 ">
-         Nomor Meja: {table?.number}
-        </h5>
+
+      {/* INFO MEJA */}
+      <div className="flex justify-center my-4">
+        <div className="px-6 py-2 rounded-full bg-slate-900 text-white font-semibold text-sm shadow">
+          Meja No. {table?.number}
+        </div>
       </div>
-      <div className=" max-sm:px-2 flex items-center justify-center">
-        <ul className="flex gap-8 text-center overflow-x-scroll">
-          <li className="font-bold text-xl md:text-2xl whitespace-nowrap">All Category</li>
-          {
-            categories.map((category: any) => (
-              <li className="text-xl md:text-2xl font-bold whitespace-nowrap" key={category.id}>
+
+      {/* KATEGORI */}
+      <div className="sticky top-[200px] z-20 ">
+        <div className="px-4 pb-3">
+          <ul className="flex gap-3 overflow-x-auto no-scrollbar">
+            <li
+              onClick={() => setActiveCategory("ALL")}
+              className={`shrink-0 px-4 py-2 rounded-full font-semibold text-sm cursor-pointer transition
+      ${
+        activeCategory === "ALL"
+          ? "bg-slate-900 text-white"
+          : "bg-white border text-slate-700"
+      }
+    `}
+            >
+              Semua
+            </li>
+
+            {categories.map((category: any) => (
+              <li
+                key={category.id}
+                onClick={() => setActiveCategory(category.name)}
+                className={`shrink-0 px-4 py-2 rounded-full font-semibold text-sm cursor-pointer transition
+        ${
+          activeCategory === category.name
+            ? "bg-slate-900 text-white"
+            : "bg-white border text-slate-700"
+        }
+      `}
+              >
                 {category.name}
               </li>
-            ))
-          }
-        </ul>
+            ))}
+          </ul>
+        </div>
       </div>
-      <div className="py-5">
-        <div className=" px-3 gird grid-cols-2  ">
-          {
-            products.map((product: any) => (
-              <div key={product.id} className="">
-                <Image src={product.image_url} alt="Mie" width={100} height={100} className="p-2 border"/>
+
+      {/* PRODUK */}
+      <div className="px-4 pb-24">
+        <div className="grid grid-cols-2 gap-4">
+          {filteredProducts.map((product: any) => (
+            <div
+              key={product.id}
+              className="bg-white rounded-2xl shadow-sm overflow-hidden active:scale-[0.98] transition"
+            >
+              <div className="relative w-full h-32">
+                <Image
+                  src={product.image_url}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                />
               </div>
-            ))
-          }
+
+              <div className="p-3">
+                <h3 className="font-semibold text-sm line-clamp-2">
+                  {product.name}
+                </h3>
+                <p className="text-slate-500 text-xs mt-1">
+                  Rp {product.price?.toLocaleString("id-ID")}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
-   </div>
   );
 }
