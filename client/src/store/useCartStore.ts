@@ -14,6 +14,7 @@ interface CartState {
   items: CartItem[];
   addItem: (item: Omit<CartItem, 'uniqueId'>) => void;
   removeItem: (uniqueId: string) => void;
+  decreaseItem: (uniqueId: string) => void;
   clearCart: () => void;
   totalPrice: () => number;
 }
@@ -42,6 +43,23 @@ export const useCartStore = create<CartState>()(
 
       removeItem: (uniqueId) =>
         set((state) => ({ items: state.items.filter((i) => i.uniqueId !== uniqueId) })),
+      decreaseItem: (uniqueId) => {
+        set((state) => {
+          const existing = state.items.find((i) => i.uniqueId === uniqueId);
+          if (existing && existing.quantity > 1) {
+            return {
+              items: state.items.map((i) =>
+                i.uniqueId === uniqueId ? { ...i, quantity: i.quantity - 1 } : i
+              ),
+            };
+          } else {
+            // Jika sisa 1 dan dikurangi, hapus item
+            return {
+              items: state.items.filter((i) => i.uniqueId !== uniqueId)
+            };
+          }
+        });
+      },
 
       clearCart: () => set({ items: [] }),
 
