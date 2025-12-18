@@ -32,7 +32,7 @@ console.log(product)
   }
 
   return (
-    <div className="p-6 max-w-2xl">
+    <div className="p-6 mx-auto max-w-2xl flex flex-col justify-center items-center">
       <h1 className="text-2xl font-bold mb-6">Edit Product</h1>
 
       <div className={isSaving ? "opacity-50 pointer-events-none" : ""}>

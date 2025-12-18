@@ -29,7 +29,7 @@ export default function ProductForm({
   return (
     <FormProvider {...methods}>
       <form
-        className="space-y-6"
+        className="space-y-6 border p-6 rounded-md shadow-md w-full max-w-2xl"
         onSubmit={methods.handleSubmit(onSubmit, onError)}
       >
         <div>

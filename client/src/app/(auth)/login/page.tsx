@@ -39,8 +39,10 @@ export default function Login() {
   const onSubmit = async (data: FormData) => {
 try {
   const res = await login(data.username, data.password);
-  console.log(res);
-  router.push("/menu");
+  if(res.token){
+    localStorage.setItem("token", res.token);
+  }
+  router.push("/admin/products");
 } catch (error) {
   console.error("Login failed", error);
   alert("Login failed. Please check your credentials.");
