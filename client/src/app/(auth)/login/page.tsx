@@ -9,10 +9,12 @@ import {
   FieldLabel,
   FieldSet,
   FieldLegend,
-FieldError
+  FieldError,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { login } from "@/service/authService";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   username: z.string().min(3, "Username is required"),
@@ -33,12 +35,23 @@ export default function Login() {
       password: "",
     },
   });
-  const onSubmit = (data: FormData) => {
-    console.log(data);
-  }
+  const router = useRouter();
+  const onSubmit = async (data: FormData) => {
+try {
+  const res = await login(data.username, data.password);
+  console.log(res);
+  router.push("/menu");
+} catch (error) {
+  console.error("Login failed", error);
+  alert("Login failed. Please check your credentials.");
+}
+  };
   return (
     <div className="flex flex-col items-center justify-center w-full h-screen">
-      <form className="w-3/4 md:w-1/4 p-4 border border-gray-300" onSubmit={handleSubmit(onSubmit)}>
+      <form
+        className="w-3/4 md:w-1/4 p-4 border border-gray-300"
+        onSubmit={handleSubmit(onSubmit)}
+      >
         <FieldSet>
           <FieldLegend className="text-center">Silahkan Login</FieldLegend>
           <FieldGroup>
@@ -47,7 +60,12 @@ export default function Login() {
               <FieldDescription>
                 Silahkan masukan username anda
               </FieldDescription>
-              <Input id="username" type="text" placeholder="username" {...register("username")} />
+              <Input
+                id="username"
+                type="text"
+                placeholder="username"
+                {...register("username")}
+              />
               <FieldError>{errors.username?.message}</FieldError>
             </Field>
             <Field>
@@ -55,12 +73,19 @@ export default function Login() {
               <FieldDescription>
                 Silahkan masukan password anda
               </FieldDescription>
-              <Input id="password" type="password" placeholder="••••••••" {...register("password")} />
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                {...register("password")}
+              />
               <FieldError>{errors.password?.message}</FieldError>
             </Field>
           </FieldGroup>
         </FieldSet>
-        <Button className="w-full mt-4" type="submit">Login</Button>
+        <Button className="w-full mt-4" type="submit">
+          Login
+        </Button>
       </form>
     </div>
   );
