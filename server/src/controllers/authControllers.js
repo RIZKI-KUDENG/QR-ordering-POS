@@ -13,7 +13,7 @@ export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
     const { token, user } = await loginUser(username, password);
-    res.status(200).json({ message: "Login successful", token });
+    res.status(200).json({ message: "Login successful", token, user });
   } catch (error) {
     res.status(401).json({ message: error.message });
   }

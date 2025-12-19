@@ -48,7 +48,6 @@ export default function ProductListPage() {
               <tr key={p.id}>
                 <td className="p-3 border">{p.name}</td>
                 <td className="p-3 border">
-                  {/* Format mata uang agar lebih rapi */}
                   {new Intl.NumberFormat("id-ID", {
                     style: "currency",
                     currency: "IDR",

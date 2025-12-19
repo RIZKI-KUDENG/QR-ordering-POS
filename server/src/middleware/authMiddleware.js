@@ -1,26 +1,32 @@
 import jwt from 'jsonwebtoken';
 
+
 export const authMiddleware = (req, res, next) => {
-    try{
-        const authHeader = req.headers.authorization;
-        if(!authHeader){
-           return res.status(401).json({message: 'Unauthorized'})
-        }
-        const token = authHeader.split(' ')[1]
-        if(!token){
-            return res.status(401).json({message: 'Unauthorized'})
-        }
-        jwt.verify(token, process.env.JWT_SECRET, (err, user) =>{
-            if(err){
-                return res.status(401).json({message: 'Unauthorized'})
-            }
-            req.user = user;
-            next();
-        })
-    }catch(err){
-        return res.status(500).json({message: err.message})
-    }
-}
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: "Authorization header missing" });
+  }
+
+  if (!authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Invalid authorization format" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // { id, username, role, ... }
+    next();
+  } catch (err) {
+    return res.status(401).json({
+      message:
+        err.name === "TokenExpiredError"
+          ? "Token expired"
+          : "Invalid token",
+    });
+  }
+};
 
 export const verifyAdmin = (req, res, next) => {
     if(req.user.role !== 'ADMIN'){
