@@ -143,7 +143,7 @@ if (paymentMethod === "CASH") {
 
     const snapPayload = {
       transaction_details: {
-        order_id: order.id.toString(),
+        order_id: `${order.id}-${Date.now()}`,
         gross_amount: Math.round(finalTotalPrice),
       },
       credit_card: { secure: true },

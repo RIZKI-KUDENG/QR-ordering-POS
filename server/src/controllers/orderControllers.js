@@ -24,7 +24,15 @@ export const getOrders = async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
       include: {
-        items: true,
+        table: true, 
+        items: {
+          include: {
+            product: true,
+            selectedOptions: {
+                include: { variantOption: true }
+            }
+          }
+        },
       },
       orderBy: {
         created_at: "asc",
@@ -38,10 +46,11 @@ export const getOrders = async (req, res) => {
 
 export const updateOrders = async (req, res) => {
   try {
-    const { id, status } = req.body;
+    const { id } = req.params;
+    const {  status } = req.body;
     await prisma.order.update({
       where: {
-        id: id,
+        id: Number(id),
       },
       data: {
         status: status,

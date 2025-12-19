@@ -46,8 +46,17 @@ export default function CartModal({
       } else {
         // @ts-ignore
         window.snap.pay(data.snapToken, {
-          onSuccess: function (result: any) {
+          onSuccess: async function (result: any) {
             console.log("Payment success", result);
+            try {
+               await api.patch(`/orders/kitchen/${data.orderId}/status`, {
+                 status: "PAID"
+               });
+               
+               console.log("Status berhasil diupdate jadi PAID");
+            } catch (err) {
+               console.error("Gagal update status manual:", err);
+            }
             clearCart();
             onClose();
             router.push(`/order-status/${data.orderId}`);

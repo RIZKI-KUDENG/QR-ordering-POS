@@ -91,7 +91,9 @@ export default function KitchenPage() {
 
               {/* Actions */}
               <div className="p-4 bg-gray-50 flex gap-2">
-                {order.status === "PENDING" && (
+                
+                {/* [PERBAIKAN] Ganti "PENDING" menjadi "PAID" */}
+                {order.status === "PAID" && (
                   <Button
                     className="w-full bg-blue-600 hover:bg-blue-700"
                     onClick={() =>
