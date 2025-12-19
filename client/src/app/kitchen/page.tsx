@@ -14,7 +14,7 @@ export default function KitchenPage() {
   const { mutate: updateStatus } = useUpdateOrderStatus();
 
   const kitchenOrders = orders.filter(
-    (o: any) => o.status === "PENDING" || o.status === "COOKING"
+    (o: any) => o.status === "PAID" || o.status === "COOKING"
   );
 
   console.log("Kitchen Orders:", kitchenOrders);
@@ -74,7 +74,7 @@ export default function KitchenPage() {
                       <span className="font-bold">
                         {item.quantity}x
                       </span>{" "}
-                      {item.product_id}
+                      {item.product?.name}
                     </div>
 
                     {/* Variant Options */}

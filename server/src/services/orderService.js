@@ -2,7 +2,7 @@ import prisma from "../db/database.js";
 import midtransClient from "midtrans-client";
 
 export const createOrderService = async (payload) => {
-  const { tableToken, items } = payload;
+  const { tableToken, items, paymentMethod } = payload;
 
   if (!tableToken || !Array.isArray(items) || items.length === 0) {
     throw new Error("tableToken dan items wajib diisi");
@@ -39,7 +39,6 @@ export const createOrderService = async (payload) => {
         throw new Error(`Quantity untuk produk ${product.name} tidak valid`);
       }
 
-      // KONVERSI HARGA: Pastikan field 'price' ada nilainya sebelum .toString()
       const priceVal = product.price ? product.price.toString() : "0";
       const basePrice = Number(priceVal);
 
@@ -84,7 +83,7 @@ export const createOrderService = async (payload) => {
       enrichedItems.push({
         product,
         quantity: qty,
-        options: optionRecords,
+        options: [],
         unitPrice: basePrice,
         itemSubtotal,
       });
@@ -100,7 +99,7 @@ export const createOrderService = async (payload) => {
         },
         status: "PENDING",
         total_amount: totalPrice,
-        payment_method: "CASH",
+        payment_method: paymentMethod || "MIDTRANS",
       },
     });
 
@@ -129,28 +128,34 @@ export const createOrderService = async (payload) => {
   });
 
   // 3. Midtrans (Luar Transaction)
-  const snap = new midtransClient.Snap({
-    isProduction: false,
-    serverKey: process.env.MIDTRANS_SERVER_KEY,
-  });
+if (paymentMethod === "CASH") {
+    return {
+      message: "Order created (Cash)",
+      orderId: order.id,
+      snapToken: null, 
+      redirectUrl: null,
+    };
+  } else {
+    const snap = new midtransClient.Snap({
+      isProduction: false,
+      serverKey: process.env.MIDTRANS_SERVER_KEY,
+    });
 
-  // PERBAIKAN: Gunakan 'transaction_details' (jamak) dan Math.round()
-  const snapPayload = {
-    transaction_details: { 
-      order_id: order.id.toString(),
-      gross_amount: Math.round(finalTotalPrice), // Pastikan Integer
-    },
-    credit_card: {
-      secure: true,
-    },
-  };
+    const snapPayload = {
+      transaction_details: {
+        order_id: order.id.toString(),
+        gross_amount: Math.round(finalTotalPrice),
+      },
+      credit_card: { secure: true },
+    };
 
-  const snapResponse = await snap.createTransaction(snapPayload);
+    const snapResponse = await snap.createTransaction(snapPayload);
 
-  return {
-    message: "Order created",
-    orderId: order.id,
-    snapToken: snapResponse.token,
-    redirectUrl: snapResponse.redirect_url,
-  };
+    return {
+      message: "Order created",
+      orderId: order.id,
+      snapToken: snapResponse.token,
+      redirectUrl: snapResponse.redirect_url,
+    };
+  }
 };
