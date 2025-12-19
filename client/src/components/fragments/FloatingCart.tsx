@@ -5,7 +5,11 @@ import { ShoppingBag } from "lucide-react";
 import { useEffect, useState } from "react";
 import CartModal from "./CartModal";
 
-export default function FloatingCart() {
+interface FloatingCartProps {
+  tableToken: string;
+}
+
+export default function FloatingCart({ tableToken }: FloatingCartProps) {
   const [mounted, setMounted] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   
@@ -48,7 +52,8 @@ export default function FloatingCart() {
       {/* Modal Rincian */}
       <CartModal 
         isOpen={isCartOpen} 
-        onClose={() => setIsCartOpen(false)} 
+        onClose={() => setIsCartOpen(false)}
+        tableToken={tableToken}
       />
     </>
   );

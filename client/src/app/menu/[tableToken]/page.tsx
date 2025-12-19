@@ -3,9 +3,9 @@ import MenuClient from "./MenuClient";
 export default async function MenuPage({
   params,
 }: {
-  params: Promise<{ tabletoken: string }>;
+  params: Promise<{ tableToken: string }>;
 }) {
-  const { tabletoken } = await params;
+  const { tableToken } = await params;
 
-  return <MenuClient token={tabletoken} />;
+  return <MenuClient token={tableToken} />;
 }

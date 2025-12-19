@@ -19,12 +19,12 @@ export const createOrderService = async (payload) => {
     throw new Error("Meja tidak valid");
   }
 
-  // 2. transaction
-  const order = await prisma.$transaction(async (tx) => {
+  // 2. Transaction
+  const { order, finalTotalPrice } = await prisma.$transaction(async (tx) => {
     let totalPrice = 0;
     const enrichedItems = [];
 
-    // hitung total dan siapkan data item
+    // Hitung total dan siapkan data item
     for (const item of items) {
       const product = await tx.product.findUnique({
         where: { id: item.productId },
@@ -34,12 +34,14 @@ export const createOrderService = async (payload) => {
         throw new Error(`Produk dengan id ${item.productId} tidak ditemukan`);
       }
 
-      if (!item.quantity || item.quantity <= 0) {
+      const qty = parseInt(item.quantity);
+      if (!qty || qty <= 0) {
         throw new Error(`Quantity untuk produk ${product.name} tidak valid`);
       }
 
-      // Harga asli produk
-      const basePrice = product.price;
+      // KONVERSI HARGA: Pastikan field 'price' ada nilainya sebelum .toString()
+      const priceVal = product.price ? product.price.toString() : "0";
+      const basePrice = Number(priceVal);
 
       // Ambil opsi
       let optionRecords = [];
@@ -58,39 +60,51 @@ export const createOrderService = async (payload) => {
           );
         }
 
-        optionsExtraTotalPerQty = optionRecords.reduce(
-          (sum, opt) => sum + opt.extraPrice,
-          0
+        optionsExtraTotalPerQty = optionRecords.reduce((sum, opt) => {
+          // Gunakan 'extra_price' sesuai schema.prisma
+          const extraPriceVal = opt.extra_price
+            ? opt.extra_price.toString()
+            : "0";
+          return sum + Number(extraPriceVal);
+        }, 0);
+      }
+
+      // Hitung subtotal
+      const itemSubtotal = (basePrice + optionsExtraTotalPerQty) * qty;
+
+      if (isNaN(itemSubtotal)) {
+        throw new Error(
+          `Perhitungan error: Harga produk ${product.name} menghasilkan NaN.`
         );
       }
 
-      // subtotal = (harga produk + total extra per porsi) * quantity
-      const itemSubtotal =
-        (basePrice + optionsExtraTotalPerQty) * item.quantity;
-
       totalPrice += itemSubtotal;
 
-      // Simpan detail item + opsi untuk OrderItem
+      // Simpan detail item
       enrichedItems.push({
         product,
-        quantity: item.quantity,
+        quantity: qty,
         options: optionRecords,
         unitPrice: basePrice,
         itemSubtotal,
       });
     }
 
-    //buat Order
+    // Buat Order
     const createdOrder = await tx.order.create({
       data: {
-        table_id: table.id,
+        table: {
+          connect: {
+            id: table.id,
+          },
+        },
         status: "PENDING",
         total_amount: totalPrice,
         payment_method: "CASH",
       },
     });
 
-    // buat OrderItem dan OrderItemOption
+    // Buat OrderItem dan OrderItemOption
     for (const enriched of enrichedItems) {
       const orderItem = await tx.orderItem.create({
         data: {
@@ -111,26 +125,32 @@ export const createOrderService = async (payload) => {
       }
     }
 
-    return createdOrder;
+    return { order: createdOrder, finalTotalPrice: totalPrice };
   });
+
+  // 3. Midtrans (Luar Transaction)
   const snap = new midtransClient.Snap({
     isProduction: false,
     serverKey: process.env.MIDTRANS_SERVER_KEY,
-  })
+  });
+
+  // PERBAIKAN: Gunakan 'transaction_details' (jamak) dan Math.round()
   const snapPayload = {
-    transaction_detail: {
-        order_id: order.id.toString(),
-        gross_amount: totalPrice
+    transaction_details: { 
+      order_id: order.id.toString(),
+      gross_amount: Math.round(finalTotalPrice), // Pastikan Integer
     },
     credit_card: {
-        secure: true
-    }
-  }
+      secure: true,
+    },
+  };
+
   const snapResponse = await snap.createTransaction(snapPayload);
-  return{
-     message: "Order created",
-    orderId: createdOrder.id,
+
+  return {
+    message: "Order created",
+    orderId: order.id,
     snapToken: snapResponse.token,
     redirectUrl: snapResponse.redirect_url,
-  }
+  };
 };

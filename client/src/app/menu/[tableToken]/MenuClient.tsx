@@ -32,7 +32,7 @@ export default function MenuClient({ token }: { token: string }) {
   if (isError) return <div className="p-6 text-red-500">QR Code tidak valid</div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 relative pb-32"> {/* Tambah padding bottom agar cart bar tidak menutupi */}
+    <div className="min-h-screen bg-slate-50 relative pb-32"> 
       
       {/* HEADER */}
       <div className="bg-white shadow-sm sticky top-0 z-30">
@@ -104,7 +104,7 @@ export default function MenuClient({ token }: { token: string }) {
       />
       
           {
-            !isModalOpen ? <FloatingCart /> : null
+            !isModalOpen ? <FloatingCart  tableToken={token} /> : null
           }
     </div>
   );

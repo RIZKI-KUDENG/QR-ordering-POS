@@ -10,12 +10,12 @@ import api from "@/lib/axios";
 interface CartModalProps {
   isOpen: boolean;
   onClose: () => void;
+  tableToken: string;
 }
 
-export default function CartModal({ isOpen, onClose }: CartModalProps) {
+export default function CartModal({ isOpen, onClose, tableToken }: CartModalProps) {
   const { items, removeItem, totalPrice, decreaseItem, clearCart } = useCartStore(); 
   const [isLoading, setIsLoading] = useState(false); 
-  const params = useParams(); 
   const router = useRouter();
 
   if (!isOpen) return null;
@@ -29,7 +29,7 @@ export default function CartModal({ isOpen, onClose }: CartModalProps) {
       }));
 
       const { data } = await api.post("/orders", {
-        tableToken: params.tableToken, 
+        tableToken: tableToken, 
         items: orderItems,
       });
 
