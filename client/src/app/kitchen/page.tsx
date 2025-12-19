@@ -17,6 +17,8 @@ export default function KitchenPage() {
     (o: any) => o.status === "PENDING" || o.status === "COOKING"
   );
 
+  console.log("Kitchen Orders:", kitchenOrders);
+
   if (isLoading) {
     return (
       <div className="p-8 text-2xl font-bold">
@@ -72,7 +74,7 @@ export default function KitchenPage() {
                       <span className="font-bold">
                         {item.quantity}x
                       </span>{" "}
-                      {item.product.name}
+                      {item.product_id}
                     </div>
 
                     {/* Variant Options */}

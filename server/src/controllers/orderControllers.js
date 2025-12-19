@@ -1,4 +1,5 @@
 import { createOrderService } from "../services/orderService.js";
+import  prisma  from "../db/database.js"
 
 export const createOrder = async (req, res) => {
   try {
@@ -26,7 +27,7 @@ export const getOrders = async (req, res) => {
         items: true,
       },
       orderBy: {
-        createdAt: "asc",
+        created_at: "asc",
       },
     });
     res.status(200).json(orders);
