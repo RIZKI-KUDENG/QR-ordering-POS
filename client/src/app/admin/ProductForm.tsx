@@ -48,6 +48,14 @@ export default function ProductForm({
         </div>
 
         <div>
+          <label>Stok</label>
+          <Input type="number" {...methods.register("stock")}
+          placeholder="0"
+          required
+          />
+        </div>
+
+        <div>
           <label>Kategori</label>
           <Select
             onValueChange={(v) => methods.setValue("category_id", Number(v))}

@@ -21,7 +21,7 @@ export default function AdminLayout({
   };
 
   const menuItems = [
-    { name: "Dashboard", href: "/admin/dashboard" },
+    { name: "Dashboard", href: "/admin", exact: true },
     { name: "Produk", href: "/admin/products" },
     { name: "Meja (QR Code)", href: "/admin/tables" },
     { name: "→ Halaman Kasir", href: "/cashier", highlight: true },
@@ -33,7 +33,15 @@ export default function AdminLayout({
       {menuItems.map((item) => (
         <Link key={item.href} href={item.href} onClick={() => setOpen(false)}>
           <Button
-            variant={pathname.startsWith(item.href) ? "default" : "ghost"}
+            variant={
+              item.href === "/admin"
+                ? pathname === "/admin"
+                  ? "default"
+                  : "ghost"
+                : pathname.startsWith(item.href)
+                ? "default"
+                : "ghost"
+            }
             className={`w-full justify-start ${
               item.highlight ? "text-blue-600 font-semibold" : ""
             }`}

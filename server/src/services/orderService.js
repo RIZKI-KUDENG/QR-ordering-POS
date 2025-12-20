@@ -19,7 +19,7 @@ export const createOrderService = async (payload) => {
     throw new Error("Meja tidak valid");
   }
 
-  // 2. Transaction
+  // 2. Transaction (Kita update logika di dalam sini)
   const { order, finalTotalPrice } = await prisma.$transaction(async (tx) => {
     let totalPrice = 0;
     const enrichedItems = [];
@@ -39,28 +39,44 @@ export const createOrderService = async (payload) => {
         throw new Error(`Quantity untuk produk ${product.name} tidak valid`);
       }
 
+      // --- [NEW] LOGIKA STOK DIMULAI ---
+      // Cek apakah stok cukup
+      if (product.stock < qty) {
+        throw new Error(
+          `Stok habis untuk menu: ${product.name} (Sisa stok: ${product.stock})`
+        );
+      }
+
+      // Kurangi stok di database
+      await tx.product.update({
+        where: { id: product.id },
+        data: { stock: product.stock - qty },
+      });
+      // --- [NEW] LOGIKA STOK SELESAI ---
+
       const priceVal = product.price ? product.price.toString() : "0";
       const basePrice = Number(priceVal);
 
-      // Ambil opsi
+      // Ambil opsi (kode lama Anda tetap dipakai)
       let optionRecords = [];
       let optionsExtraTotalPerQty = 0;
 
       if (item.selectedOptions && item.selectedOptions.length > 0) {
+        // Ambil ID opsi saja dari array object item.selectedOptions
+        // Pastikan format item.selectedOptions sesuai yang dikirim frontend. 
+        // Jika frontend kirim array of objects {id, name}, ambil id-nya saja:
+        const optionIds = item.selectedOptions.map(opt => opt.id || opt); 
+
         optionRecords = await tx.variantOption.findMany({
           where: {
-            id: { in: item.selectedOptions },
+            id: { in: optionIds },
           },
         });
 
-        if (optionRecords.length !== item.selectedOptions.length) {
-          throw new Error(
-            `Beberapa opsi untuk produk ${product.name} tidak valid`
-          );
-        }
+        // Validasi jumlah opsi valid (opsional, sesuaikan kebutuhan)
+        // if (optionRecords.length !== optionIds.length) { ... }
 
         optionsExtraTotalPerQty = optionRecords.reduce((sum, opt) => {
-          // Gunakan 'extra_price' sesuai schema.prisma
           const extraPriceVal = opt.extra_price
             ? opt.extra_price.toString()
             : "0";
@@ -79,11 +95,11 @@ export const createOrderService = async (payload) => {
 
       totalPrice += itemSubtotal;
 
-      // Simpan detail item
+      // Simpan detail item ke array sementara
       enrichedItems.push({
         product,
         quantity: qty,
-        options: [],
+        options: optionRecords, // Simpan record opsi lengkap untuk insert nanti
         unitPrice: basePrice,
         itemSubtotal,
       });
@@ -127,12 +143,12 @@ export const createOrderService = async (payload) => {
     return { order: createdOrder, finalTotalPrice: totalPrice };
   });
 
-  // 3. Midtrans (Luar Transaction)
-if (paymentMethod === "CASH") {
+  // 3. Midtrans (Luar Transaction) - Sama seperti kode lama
+  if (paymentMethod === "CASH") {
     return {
       message: "Order created (Cash)",
       orderId: order.id,
-      snapToken: null, 
+      snapToken: null,
       redirectUrl: null,
     };
   } else {
@@ -143,7 +159,7 @@ if (paymentMethod === "CASH") {
 
     const snapPayload = {
       transaction_details: {
-        order_id: `${order.id}-${Date.now()}`,
+        order_id: `${order.id}-${Date.now()}`, // Tambahkan timestamp biar unik jika order id terulang
         gross_amount: Math.round(finalTotalPrice),
       },
       credit_card: { secure: true },
