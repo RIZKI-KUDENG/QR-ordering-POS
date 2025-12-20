@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import {  useRouter } from "next/navigation";
 import { useCartStore } from "@/store/useCartStore";
 import { Button } from "@/components/ui/button";
-import { X, Trash2, Loader2 } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 import api from "@/lib/axios";
 
 interface CartModalProps {

@@ -46,6 +46,7 @@ model Product{
   price Decimal @db.Decimal(10, 2)
   image_url String?
   is_available Boolean @default(true)
+  stock       Int      @default(0)
   category_id Int
   category Category @relation(fields: [category_id], references: [id])
   variants Variant[]

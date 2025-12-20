@@ -3,6 +3,7 @@
 import { useOrders, useUpdateOrderStatus } from "@/hooks/useOrders";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import PrintOrderButton from "@/components/fragments/PrintOrderButton";
 
 export default function CashierPage() {
   const { data: orders = [], isLoading } = useOrders();
@@ -84,7 +85,8 @@ export default function CashierPage() {
                     <td className="p-4 text-sm text-gray-500">
                       {new Date(order.created_at).toLocaleTimeString()}
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 flex flex-wrap gap-2">
+                      <PrintOrderButton order={order} />
                       {order.status === "PENDING" && (
                         <Button
                           size="sm"
