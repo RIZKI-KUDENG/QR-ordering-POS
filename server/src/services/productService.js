@@ -8,6 +8,7 @@ export const createProductService = async (data) => {
     image_url: data.image_url,
     category_id: data.category_id,
     is_available: data.is_available ?? true,
+    stock: data.stock ? Number(data.stock) : 0,
   };
 
 //apakah user mengirim variants?
@@ -44,18 +45,41 @@ export const createProductService = async (data) => {
 };
 
 export const updateProductService = async (id, data) => {
-  const { variants, ...productData } = data; 
-
+  const { variants, ...productData } = data;
   delete productData.id;
-  delete productData.category; 
+  delete productData.category;
+  
+  if (productData.price) productData.price = Number(productData.price);
+  if (productData.stock) productData.stock = Number(productData.stock); 
 
   return await prisma.$transaction(async (tx) => {
     const updatedProduct = await tx.product.update({
-      where: { id: Number(id) }, 
+      where: { id: Number(id) },
       data: productData,
     });
 
     if (variants && Array.isArray(variants)) {
+      const existingVariants = await tx.variant.findMany({
+        where: { product_id: Number(id) },
+        select: { id: true }
+      });
+      const existingVariantIds = existingVariants.map(v => v.id);
+      const incomingVariantIds = variants
+        .filter(v => v.id) 
+        .map(v => Number(v.id));
+      const toDeleteIds = existingVariantIds.filter(
+        dbId => !incomingVariantIds.includes(dbId)
+      );
+      if (toDeleteIds.length > 0) {
+        await tx.variantOption.deleteMany({
+          where: { variant_id: { in: toDeleteIds } }
+        });
+        
+        await tx.variant.deleteMany({
+          where: { id: { in: toDeleteIds } }
+        });
+      }
+
       for (const variant of variants) {
         if (variant.id) {
           await tx.variant.update({
@@ -66,15 +90,24 @@ export const updateProductService = async (id, data) => {
             },
           });
 
+
           if (variant.options && Array.isArray(variant.options)) {
+            const existingOptions = await tx.variantOption.findMany({
+               where: { variant_id: variant.id },
+               select: { id: true }
+            });
+            const existingOptionIds = existingOptions.map(o => o.id);
+            const incomingOptionIds = variant.options.filter(o => o.id).map(o => Number(o.id));
+            
+            const optionsToDelete = existingOptionIds.filter(oid => !incomingOptionIds.includes(oid));
+            if(optionsToDelete.length > 0) {
+               await tx.variantOption.deleteMany({ where: { id: { in: optionsToDelete } } });
+            }
             for (const option of variant.options) {
               if (option.id) {
                 await tx.variantOption.update({
                   where: { id: option.id },
-                  data: {
-                    name: option.name,
-                    extra_price: option.extra_price,
-                  },
+                  data: { name: option.name, extra_price: option.extra_price },
                 });
               } else {
                 await tx.variantOption.create({

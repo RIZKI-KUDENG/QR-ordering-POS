@@ -60,6 +60,8 @@ model Variant{
   product Product @relation(fields: [product_id], references: [id])
   options VariantOption[]
   is_required Boolean @default(false)
+
+  @@unique([name, product_id])
 }
 
 model VariantOption {
