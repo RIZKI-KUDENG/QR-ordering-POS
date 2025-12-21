@@ -1,5 +1,5 @@
 import { createOrderService } from "../services/orderService.js";
-import  prisma  from "../db/database.js"
+import prisma from "../db/database.js";
 
 export const createOrder = async (req, res) => {
   try {
@@ -24,14 +24,14 @@ export const getOrders = async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
       include: {
-        table: true, 
+        table: true,
         items: {
           include: {
             product: true,
             selectedOptions: {
-                include: { variantOption: true }
-            }
-          }
+              include: { variantOption: true },
+            },
+          },
         },
       },
       orderBy: {
@@ -47,7 +47,7 @@ export const getOrders = async (req, res) => {
 export const updateOrders = async (req, res) => {
   try {
     const { id } = req.params;
-    const {  status } = req.body;
+    const { status } = req.body;
     await prisma.order.update({
       where: {
         id: Number(id),
@@ -55,6 +55,12 @@ export const updateOrders = async (req, res) => {
       data: {
         status: status,
       },
+    });
+    const io = req.app.get("socketio");
+
+    io.to(`order-${orderId}`).emit("order-status-updated", {
+      orderId,
+      status,
     });
     res.status(200).json({ message: "Order updated" });
   } catch (error) {

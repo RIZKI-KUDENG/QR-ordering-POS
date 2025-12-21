@@ -9,30 +9,44 @@ export default function OrderStatusPage({ params }: { params: Promise<{ orderId:
 
   const [status, setStatus] = useState('Loading...');
 
-  useEffect(() => {
+useEffect(() => {
+  const fetchInitialStatus = async () => {
+    try {
+      const response = await api.get(`/orders/${orderId}`);
+      setStatus(response.data.status);
+    } catch (error) {
+      console.error("Gagal mengambil status order:", error);
+      setStatus("Error");
+    }
+  };
 
-    const fetchInitialStatus = async () => {
-      try {
-        const response = await api.get(`/orders/${orderId}`);
-        setStatus(response.data.status);
-      } catch (error) {
-        console.error("Gagal mengambil status order:", error);
-        setStatus("Error");
-      }
-    };
+  fetchInitialStatus();
 
-    fetchInitialStatus();
-    const socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
-    
-    socket.on('order-status-updated', (data) => {
-      if (String(data.orderId) === String(orderId)) { 
-        console.log("Status update received:", data.status);
-        setStatus(data.status); 
-      }
-    });
+  const socket = io(
+    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+    {
+      transports: ["websocket"], 
+    }
+  );
 
-    return () => { socket.disconnect(); };
-  }, [orderId]); 
+  socket.on("connect", () => {
+    console.log("Socket connected:", socket.id);
+    socket.emit("join-order", orderId);
+  });
+
+  socket.on("order-status-updated", (data) => {
+    console.log("Event masuk:", data);
+
+    if (String(data.orderId) === String(orderId)) {
+      setStatus(data.status);
+    }
+  });
+
+  return () => {
+    socket.disconnect();
+  };
+}, [orderId]);
+
 
   const getStatusColor = (s: string) => {
     switch (s) {
