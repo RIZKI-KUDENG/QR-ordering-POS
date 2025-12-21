@@ -10,7 +10,9 @@ import {
 } from "@/components/ui/card";
 
 export default function KitchenPage() {
-  const { data: orders = [], isLoading } = useOrders();
+  const { data: response, isLoading } = useOrders(); 
+  const orders = response?.data || []; 
+
   const { mutate: updateStatus } = useUpdateOrderStatus();
 
   const kitchenOrders = orders.filter(
@@ -58,7 +60,8 @@ export default function KitchenPage() {
                     Meja {order.table?.number}
                   </CardTitle>
                   <span className="text-sm text-gray-500">
-                    #{order.id}
+                    {/* Tampilkan Daily Counter jika ada, fallback ke ID */}
+                    #{String(order.daily_counter || order.id).padStart(3, '0')}
                   </span>
                 </div>
               </CardHeader>
@@ -92,7 +95,6 @@ export default function KitchenPage() {
               {/* Actions */}
               <div className="p-4 bg-gray-50 flex gap-2">
                 
-                {/* [PERBAIKAN] Ganti "PENDING" menjadi "PAID" */}
                 {order.status === "PAID" && (
                   <Button
                     className="w-full bg-blue-600 hover:bg-blue-700"

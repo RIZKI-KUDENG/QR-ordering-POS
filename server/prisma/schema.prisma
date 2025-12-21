@@ -83,6 +83,7 @@ model Order {
   created_at    DateTime @default(now())
   cash_received Decimal? @db.Decimal(10, 2)
   change        Decimal? @db.Decimal(10, 2)
+  daily_counter Int      @default(1)
   items         OrderItem[]
 }
 

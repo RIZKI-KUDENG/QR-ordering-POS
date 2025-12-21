@@ -1,24 +1,36 @@
 "use client";
 
-import { useState } from "react"; // [Baru] Import useState
+import { useState } from "react";
 import { useOrders, useUpdateOrderStatus } from "@/hooks/useOrders";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input"; // [Baru] Pastikan import Input
-import { Label } from "@/components/ui/label"; // [Baru] Pastikan import Label
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import PrintOrderButton from "@/components/fragments/PrintOrderButton";
 
 export default function CashierPage() {
-  const { data: orders = [], isLoading } = useOrders();
+  // [STATE] Pagination & Data
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Mengirim currentPage ke hook (pastikan hook useOrders sudah diupdate menerima param page)
+  const { data: response, isLoading } = useOrders(currentPage);
   const { mutate: updateStatus } = useUpdateOrderStatus();
 
-  // [Baru] State untuk Modal Pembayaran
+  // Ambil data orders & pagination secara aman (optional chaining)
+  // Jika backend belum update pagination, fallback ke array kosong
+  const orders = response?.data || []; 
+  const pagination = response?.pagination || { 
+    totalPages: 1, 
+    currentPage: 1, 
+    totalItems: 0 
+  };
+
+  // [STATE] Modal Pembayaran
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [cashReceived, setCashReceived] = useState("");
-  
-  const sortedOrders = [...orders].sort((a: any, b: any) => b.id - a.id);
 
+  // Helper Format Rupiah
   const formatRupiah = (val: number) =>
     new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -26,11 +38,16 @@ export default function CashierPage() {
       minimumFractionDigits: 0,
     }).format(val);
 
-  // [Baru] Logika Pembayaran
+  // --- LOGIKA PEMBAYARAN ---
   const handleOpenPayment = (order: any) => {
     setSelectedOrder(order);
-    setCashReceived(""); // Reset input
+    setCashReceived(""); 
     setIsPaymentModalOpen(true);
+  };
+
+  const calculateChange = () => {
+    if (!selectedOrder || !cashReceived) return 0;
+    return Math.max(0, Number(cashReceived) - Number(selectedOrder.total_amount));
   };
 
   const handleConfirmPayment = () => {
@@ -57,15 +74,18 @@ export default function CashierPage() {
     setSelectedOrder(null);
   };
 
-  // [Baru] Hitung kembalian realtime untuk display
-  const calculateChange = () => {
-    if (!selectedOrder || !cashReceived) return 0;
-    return Math.max(0, Number(cashReceived) - Number(selectedOrder.total_amount));
+  // --- LOGIKA PAGINATION ---
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < pagination.totalPages) setCurrentPage((prev) => prev + 1);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex relative">
-      {/* Sidebar (Tetap sama) */}
+      {/* Sidebar */}
       <aside className="w-20 md:w-64 bg-white border-r min-h-screen p-4 flex flex-col justify-between">
         <div>
           <h1 className="text-xl font-bold mb-8 text-center md:text-left">
@@ -79,143 +99,173 @@ export default function CashierPage() {
         </div>
       </aside>
 
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-6 flex flex-col h-screen overflow-hidden">
         <h2 className="text-2xl font-bold mb-6">Daftar Transaksi</h2>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        {/* Tabel Container dengan Scroll */}
+        <div className="bg-white rounded-lg shadow flex-1 overflow-auto">
           <table className="w-full text-left">
-  <thead className="bg-gray-100 border-b">
-    <tr>
-      <th className="p-4">Order ID</th>
-      <th className="p-4">Meja</th>
-      <th className="p-4">Total</th>
-      {/* [PERBAIKAN 1] Ubah judul kolom ini dari "Status" jadi "Metode" */}
-      <th className="p-4">Metode</th> 
-      <th className="p-4">Status</th>
-      <th className="p-4">Waktu</th>
-      <th className="p-4">Aksi</th>
-    </tr>
-  </thead>
-  <tbody className="divide-y">
-    {isLoading ? (
-      <tr>
-        <td colSpan={7} className="p-4 text-center">
-          Loading...
-        </td>
-      </tr>
-    ) : (
-      sortedOrders.map((order: any) => (
-        <tr key={order.id} className="hover:bg-gray-50">
-          <td className="p-4 font-mono">#{order.id}</td>
-          <td className="p-4 font-bold text-lg">
-            {order.table?.number}
-          </td>
-          <td className="p-4 font-semibold text-green-700">
-            {formatRupiah(order.total_amount)}
-          </td>
-          
-          {/* Kolom Metode Pembayaran */}
-          <td className="p-4">
-            <span
-              className={`px-2 py-1 rounded text-xs font-bold border ${
-                order.payment_method === "CASH"
-                  ? "bg-gray-100 text-gray-700 border-gray-300"
-                  : "bg-blue-50 text-blue-600 border-blue-200"
-              }`}
-            >
-              {order.payment_method}
-            </span>
-          </td>
+            <thead className="bg-gray-100 border-b sticky top-0 z-10">
+              <tr>
+                <th className="p-4">No. Antrian</th>
+                <th className="p-4">Meja</th>
+                <th className="p-4">Total</th>
+                <th className="p-4">Metode</th>
+                <th className="p-4">Status</th>
+                <th className="p-4">Waktu</th>
+                <th className="p-4">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="p-4 text-center">Loading Data...</td>
+                </tr>
+              ) : orders.length === 0 ? (
+                 <tr>
+                  <td colSpan={7} className="p-4 text-center text-gray-500">Belum ada transaksi hari ini.</td>
+                </tr>
+              ) : (
+                orders.map((order: any) => (
+                  <tr key={order.id} className={`hover:bg-gray-50 ${order.status === 'CANCELLED' ? 'bg-red-50' : ''}`}>
+                    {/* Kolom No. Antrian (Daily Counter) */}
+                    <td className="p-4">
+                      <div className="font-mono font-bold text-lg text-blue-600">
+                        #{String(order.daily_counter || order.id).padStart(3, '0')}
+                      </div>
+                      <div className="text-xs text-gray-400">ID: {order.id}</div>
+                    </td>
 
-          {/* Kolom Status Order */}
-          <td className="p-4">
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-bold ${
-                order.status === "COMPLETED"
-                  ? "bg-green-100 text-green-800"
-                  : order.status === "PAID"
-                  ? "bg-blue-100 text-blue-800"
-                  : order.status === "COOKING"
-                  ? "bg-orange-100 text-orange-800"
-                  : order.status === "SERVED"
-                  ? "bg-purple-100 text-purple-800"
-                  : "bg-yellow-100 text-yellow-800"
-              }`}
-            >
-              {order.status}
-            </span>
-          </td>
-          <td className="p-4 text-sm text-gray-500">
-            {new Date(order.created_at).toLocaleTimeString()}
-          </td>
-          <td className="p-4 flex flex-wrap gap-2">
-            <PrintOrderButton order={order} />
-            
-            {order.status === "PENDING" && (
-              <>
-                {order.payment_method === "CASH" ? (
-                  <Button
-                    size="sm"
-                    className="bg-blue-600 hover:bg-blue-700"
-                    onClick={() => handleOpenPayment(order)}
-                  >
-                    Terima Bayar (Cash)
-                  </Button>
-                ) : (
-                  <span className="text-sm text-orange-600 font-medium animate-pulse">
-                    Menunggu Pembayaran Online...
-                  </span>
-                )}
-              </>
-            )}
+                    <td className="p-4 font-bold text-lg">
+                      {order.table?.number}
+                    </td>
 
-            {(order.status === "PAID" || order.status === "COOKING") && (
-              <span className="text-sm font-medium text-gray-500 italic">
-                {order.status === "PAID"
-                  ? "Menunggu Dapur..."
-                  : "Sedang Dimasak..."}
-              </span>
-            )}
-            
-            {order.status === "SERVED" && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-green-600 text-green-600 hover:bg-green-50"
-                onClick={() => {
-                  if (
-                    confirm(
-                      `Selesaikan transaksi meja ${order.table?.number}?`
-                    )
-                  ) {
-                    updateStatus({
-                      id: order.id,
-                      status: "COMPLETED",
-                    });
-                  }
-                }}
-              >
-                Selesaikan Order
-              </Button>
-            )}
-            {order.status === "COMPLETED" && (
-              <span className="text-green-600 font-bold text-sm">
-                Lunas & Selesai
-              </span>
-            )}
-          </td>
-        </tr>
-      ))
-    )}
-  </tbody>
-</table>
+                    <td className="p-4 font-semibold text-green-700">
+                      {formatRupiah(order.total_amount)}
+                    </td>
+                    
+                    {/* Kolom Metode Bayar */}
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded text-xs font-bold border ${
+                        order.payment_method === 'CASH' 
+                          ? 'bg-gray-100 text-gray-700 border-gray-300' 
+                          : 'bg-blue-50 text-blue-600 border-blue-200'
+                      }`}>
+                        {order.payment_method || 'UNKNOWN'}
+                      </span>
+                    </td>
+
+                    {/* Kolom Status */}
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                          order.status === "COMPLETED" ? "bg-green-100 text-green-800"
+                          : order.status === "PAID" ? "bg-blue-100 text-blue-800"
+                          : order.status === "COOKING" ? "bg-orange-100 text-orange-800"
+                          : order.status === "SERVED" ? "bg-purple-100 text-purple-800"
+                          : order.status === "CANCELLED" ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {order.status}
+                      </span>
+                    </td>
+
+                    <td className="p-4 text-sm text-gray-500">
+                      {new Date(order.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                    </td>
+
+                    <td className="p-4 flex flex-wrap gap-2 items-center">
+                      <PrintOrderButton order={order} />
+
+                      {/* Logika Tombol Sesuai Status */}
+                      {order.status === "PENDING" && (
+                        <>
+                          {order.payment_method === "CASH" ? (
+                            <Button
+                              size="sm"
+                              className="bg-blue-600 hover:bg-blue-700"
+                              onClick={() => handleOpenPayment(order)}
+                            >
+                              Terima Bayar
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-orange-600 font-medium animate-pulse border border-orange-200 bg-orange-50 px-2 py-1 rounded">
+                              Menunggu Payment...
+                            </span>
+                          )}
+                        </>
+                      )}
+
+                      {(order.status === "PAID" || order.status === "COOKING") && (
+                        <span className="text-sm font-medium text-gray-500 italic">
+                          {order.status === "PAID" ? "Menunggu Dapur" : "Sedang Dimasak"}
+                        </span>
+                      )}
+                      
+                      {order.status === "SERVED" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-green-600 text-green-600 hover:bg-green-50"
+                          onClick={() => {
+                            if (confirm(`Selesaikan transaksi meja ${order.table?.number}?`)) {
+                              updateStatus({ id: order.id, status: "COMPLETED" });
+                            }
+                          }}
+                        >
+                          Selesaikan
+                        </Button>
+                      )}
+
+                      {order.status === "COMPLETED" && (
+                        <span className="text-green-600 font-bold text-xs">✔ Selesai</span>
+                      )}
+
+                      {order.status === "CANCELLED" && (
+                        <span className="text-red-500 font-bold text-xs">✖ Batal</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
+
+        {/* --- PAGINATION CONTROLS --- */}
+        {!isLoading && orders.length > 0 && (
+          <div className="mt-4 flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border">
+            <div className="text-sm text-gray-500">
+              Halaman <b>{pagination.currentPage}</b> dari <b>{pagination.totalPages}</b> 
+              <span className="mx-2">|</span> 
+              Total <b>{pagination.totalItems}</b> Transaksi
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handlePrevPage} 
+                disabled={currentPage === 1}
+              >
+                Sebelumnya
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleNextPage} 
+                disabled={currentPage >= pagination.totalPages}
+              >
+                Selanjutnya
+              </Button>
+            </div>
+          </div>
+        )}
       </main>
 
-      {/* [BARU] MODAL PEMBAYARAN */}
+      {/* --- MODAL PEMBAYARAN CASH --- */}
       {isPaymentModalOpen && selectedOrder && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
             <h3 className="text-xl font-bold mb-4">Pembayaran Meja {selectedOrder.table?.number}</h3>
             
             <div className="space-y-4">
@@ -234,8 +284,13 @@ export default function CashierPage() {
                   placeholder="Masukkan nominal..."
                   value={cashReceived}
                   onChange={(e) => setCashReceived(e.target.value)}
-                  className="text-lg"
+                  className="text-lg font-mono"
                   autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && cashReceived && Number(cashReceived) >= Number(selectedOrder.total_amount)) {
+                      handleConfirmPayment();
+                    }
+                  }}
                 />
               </div>
 

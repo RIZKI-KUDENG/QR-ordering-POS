@@ -17,6 +17,18 @@ export const createOrderService = async (payload) => {
   if (!table) {
     throw new Error("Meja tidak valid");
   }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); 
+
+  const countToday = await prisma.order.count({
+    where: {
+      created_at: {
+        gte: today, 
+      },
+    },
+  });
+
+  const nextDailyNumber = countToday + 1;
 
   const { order, finalTotalPrice } = await prisma.$transaction(async (tx) => {
     let totalPrice = 0;
@@ -99,6 +111,7 @@ export const createOrderService = async (payload) => {
         status: "PENDING",
         total_amount: totalPrice,
         payment_method: paymentMethod || "MIDTRANS",
+        daily_counter: nextDailyNumber,
       },
     });
 

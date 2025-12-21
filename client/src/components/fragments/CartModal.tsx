@@ -69,8 +69,12 @@ export default function CartModal({
             console.error("Payment failed", result);
             alert("Pembayaran Gagal!");
           },
-          onClose: function () {
+          onClose: async function () {
             console.log("Popup closed without payment");
+            await api.patch(`/orders/kitchen/${data.orderId}/status`, {
+              status: "CANCELLED"
+            });
+            alert("Pembayaran dibatalkan. Silakan pesan ulang jika ingin mengubah pesanan.");
           },
         });
       }

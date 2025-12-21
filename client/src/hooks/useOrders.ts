@@ -2,14 +2,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 
 
-export const useOrders = () => {
+export const useOrders = (page: number = 1) => {
   return useQuery({
-    queryKey: ["orders"],
+    queryKey: ["orders", page], 
     queryFn: async () => {
-      const { data } = await api.get("/orders/kitchen"); 
-      return data;
+      const { data } = await api.get(`/orders/kitchen?page=${page}&limit=10`);
+      return data; 
     },
     refetchInterval: 5000,
+    placeholderData: (previousData) => previousData, 
   });
 };
 
