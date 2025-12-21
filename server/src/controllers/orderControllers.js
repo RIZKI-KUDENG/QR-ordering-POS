@@ -58,8 +58,8 @@ export const updateOrders = async (req, res) => {
     });
     const io = req.app.get("socketio");
 
-    io.to(`order-${orderId}`).emit("order-status-updated", {
-      orderId,
+    io.to(`order-${id}`).emit("order-status-updated", {
+      orderId : id,
       status,
     });
     res.status(200).json({ message: "Order updated" });

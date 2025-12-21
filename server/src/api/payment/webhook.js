@@ -8,7 +8,7 @@ export const midtransWebhook = async (req, res) => {
       transaction_status,
       fraud_status,
     } = req.body;
-
+const cleanOrderId = String(order_id).split('-')[0];
     const isPaid =
       transaction_status === "capture" ||
       transaction_status === "settlement";
@@ -19,14 +19,20 @@ export const midtransWebhook = async (req, res) => {
         data: { status: "PAID" },
       });
       const io = req.app.get("socketio");
-      io.emit('new order', {
+     io.emit('new order', {
         message: "Pesanan Baru",
-        orderId: order_id
-      })
+        orderId: cleanOrderId
+      });
+
+      io.to(`order-${cleanOrderId}`).emit("order-status-updated", {
+        orderId: cleanOrderId,
+        status: "PAID"
+      });
     }
 
     return res.status(200).json({ message: "OK" }); 
   } catch (error) {
+    console.error("Webhook error:", error);
     return res.status(500).json({ message: "Webhook error", error });
   }
 };

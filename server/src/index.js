@@ -12,6 +12,17 @@ const io = new Server(httpServer, {
         origin: "*"
     },
 })
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+  socket.on("join-order", (orderId) => {
+    console.log(`User ${socket.id} joining room: order-${orderId}`);
+    socket.join(`order-${orderId}`); 
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
 app.set("socketio", io)
 app.use(cors());
 app.use(express.json());
