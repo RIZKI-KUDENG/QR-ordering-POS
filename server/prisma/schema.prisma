@@ -81,6 +81,8 @@ model Order {
   payment_method String  
   status        String   @default("PENDING") 
   created_at    DateTime @default(now())
+  cash_received Decimal? @db.Decimal(10, 2)
+  change        Decimal? @db.Decimal(10, 2)
   items         OrderItem[]
 }
 

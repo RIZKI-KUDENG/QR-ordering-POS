@@ -47,14 +47,15 @@ export const getOrders = async (req, res) => {
 export const updateOrders = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const {status, cashReceived, change } = req.body;
+    const updateData = {status};
+    if (cashReceived !== undefined) updateData.cash_received = cashReceived;
+    if (change !== undefined) updateData.change = change;
     await prisma.order.update({
       where: {
         id: Number(id),
       },
-      data: {
-        status: status,
-      },
+      data: updateData,
     });
     const io = req.app.get("socketio");
 

@@ -13,11 +13,26 @@ export const useOrders = () => {
   });
 };
 
+
 export const useUpdateOrderStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      return await api.patch(`/orders/kitchen/${id}/status`, { status });
+    mutationFn: async ({ 
+      id, 
+      status, 
+      cashReceived, 
+      change 
+    }: { 
+      id: number; 
+      status: string; 
+      cashReceived?: number; 
+      change?: number;
+    }) => {
+      return await api.patch(`/orders/kitchen/${id}/status`, { 
+        status, 
+        cashReceived, 
+        change 
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
