@@ -20,6 +20,8 @@ model User {
   password String
   role Role @default(CASHIER)
   createdAt DateTime @default(now())
+
+  shifts Shift[]
 }
 
 enum Role{
@@ -104,4 +106,19 @@ model OrderItemOption {
   variant_option_id Int
   orderItem       OrderItem     @relation(fields: [order_item_id], references: [id])
   variantOption   VariantOption @relation(fields: [variant_option_id], references: [id])
+}
+
+model Shift {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+  startTime     DateTime  @default(now())
+  endTime       DateTime?
+  startCash     Decimal   @default(0) @db.Decimal(10, 2) 
+  endCash       Decimal?  @db.Decimal(10, 2) 
+  expectedCash  Decimal?  @db.Decimal(10, 2) 
+  totalSales    Decimal?  @db.Decimal(10, 2) 
+  cashSales     Decimal?  @db.Decimal(10, 2) 
+  onlineSales   Decimal?  @db.Decimal(10, 2) 
+  status        String    @default("OPEN")
 }

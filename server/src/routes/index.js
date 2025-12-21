@@ -6,6 +6,7 @@ import orderRouter from './order.js';
 import paymentRouter from './payment.js';
 import categoryRouter from './category.js';
 import dashboardRouter from './dashboard.js';
+import shiftRouter from './shift.js';
 const router = express.Router();
 
 router.use('/auth', authRouter);
@@ -15,5 +16,6 @@ router.use('/orders', orderRouter);
 router.use('/payment', paymentRouter);
 router.use('/categories', categoryRouter);
 router.use('/dashboard', dashboardRouter);
+router.use('/shifts', shiftRouter);
 
 export default router;
