@@ -14,6 +14,17 @@ export const useOrders = (page: number = 1) => {
   });
 };
 
+export const useKitchenOrders = () => {
+  return useQuery({
+    queryKey: ["kitchenOrders"], 
+    queryFn: async () => {
+      const { data } = await api.get(`/orders/kitchen`);
+      return data; 
+    },
+    refetchInterval: 5000,
+  })
+}
+
 
 export const useUpdateOrderStatus = () => {
   const queryClient = useQueryClient();
@@ -37,6 +48,7 @@ export const useUpdateOrderStatus = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["kitchenOrders"] });
     },
   });
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useOrders, useUpdateOrderStatus } from "@/hooks/useOrders";
+import { useKitchenOrders, useUpdateOrderStatus } from "@/hooks/useOrders";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,16 +10,10 @@ import {
 } from "@/components/ui/card";
 
 export default function KitchenPage() {
-  const { data: response, isLoading } = useOrders(); 
-  const orders = response?.data || []; 
+  const { data: response, isLoading } = useKitchenOrders(); 
+  const kitchenOrders = response?.data || []; 
 
   const { mutate: updateStatus } = useUpdateOrderStatus();
-
-  const kitchenOrders = orders.filter(
-    (o: any) => o.status === "PAID" || o.status === "COOKING"
-  );
-
-  console.log("Kitchen Orders:", kitchenOrders);
 
   if (isLoading) {
     return (

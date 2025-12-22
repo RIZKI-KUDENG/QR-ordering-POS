@@ -103,3 +103,33 @@ export const getOrderById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getKitchenOrders = async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        status: {
+          in: ["PAID", "COOKING"], 
+        },
+      },
+      include: {
+        table: true,
+        items: {
+          include: {
+            product: true,
+            selectedOptions: { include: { variantOption: true } },
+          },
+        },
+      },
+      orderBy: {
+        created_at: "asc", 
+      },
+    });
+
+    res.status(200).json({
+      data: orders, 
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
