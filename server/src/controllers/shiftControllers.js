@@ -52,11 +52,11 @@ export const endShift = async (req, res) => {
 
     const orders = await prisma.order.findMany({
       where: {
-        created_at: {
+        paid_at: {
           gte: activeShift.startTime,
           lte: endTime,
         },
-        status: "PAID", 
+        status: "COMPLETED", 
       },
     });
 
@@ -64,11 +64,12 @@ export const endShift = async (req, res) => {
     let cashSales = 0;
     let onlineSales = 0;
 
-    orders.forEach((order) => {
+   orders.forEach((order) => {
       const amount = Number(order.total_amount);
       totalSales += amount;
+      const method = order.payment_method ? order.payment_method.toUpperCase() : "";
 
-      if (order.payment_method === "CASH") {
+      if (method === "CASH") {
         cashSales += amount;
       } else {
         onlineSales += amount;

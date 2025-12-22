@@ -18,12 +18,12 @@ export const createOrderService = async (payload) => {
     throw new Error("Meja tidak valid");
   }
   const today = new Date();
-  today.setHours(0, 0, 0, 0); 
+  today.setHours(0, 0, 0, 0);
 
   const countToday = await prisma.order.count({
     where: {
       created_at: {
-        gte: today, 
+        gte: today,
       },
     },
   });
@@ -65,14 +65,13 @@ export const createOrderService = async (payload) => {
       let optionsExtraTotalPerQty = 0;
 
       if (item.selectedOptions && item.selectedOptions.length > 0) {
-        const optionIds = item.selectedOptions.map(opt => opt.id || opt); 
+        const optionIds = item.selectedOptions.map((opt) => opt.id || opt);
 
         optionRecords = await tx.variantOption.findMany({
           where: {
             id: { in: optionIds },
           },
         });
-
 
         optionsExtraTotalPerQty = optionRecords.reduce((sum, opt) => {
           const extraPriceVal = opt.extra_price
@@ -95,7 +94,7 @@ export const createOrderService = async (payload) => {
       enrichedItems.push({
         product,
         quantity: qty,
-        options: optionRecords, 
+        options: optionRecords,
         unitPrice: basePrice,
         itemSubtotal,
       });
@@ -110,7 +109,9 @@ export const createOrderService = async (payload) => {
         },
         status: "PENDING",
         total_amount: totalPrice,
-        payment_method: paymentMethod || "MIDTRANS",
+        payment_method: paymentMethod
+          ? paymentMethod.toUpperCase()
+          : "MIDTRANS",
         daily_counter: nextDailyNumber,
       },
     });
@@ -153,7 +154,7 @@ export const createOrderService = async (payload) => {
 
     const snapPayload = {
       transaction_details: {
-        order_id: `${order.id}-${Date.now()}`, 
+        order_id: `${order.id}-${Date.now()}`,
         gross_amount: Math.round(finalTotalPrice),
       },
       credit_card: { secure: true },

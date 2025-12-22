@@ -65,6 +65,10 @@ export const updateOrders = async (req, res) => {
     const updateData = {status};
     if (cashReceived !== undefined) updateData.cash_received = cashReceived;
     if (change !== undefined) updateData.change = change;
+
+    if (status === "PAID" || status === "COMPLETED") {
+       updateData.paid_at = new Date(); 
+    }
     await prisma.order.update({
       where: {
         id: Number(id),
